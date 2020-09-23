@@ -42,6 +42,11 @@ func InsultMe(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalf("cannot insult reeeee: %v", err)
 	}
-
+	if len(insult.Values) == 0 {
+		log.Fatalf("it's wrong wtf: %s %v", cell, insult)
+	}
+	if len(insult.Values[0]) == 0 {
+		log.Fatalf("wrong again: %s %v", cell, insult)
+	}
 	fmt.Fprintf(w, html.EscapeString(insult.Values[0][0].(string)))
 }
