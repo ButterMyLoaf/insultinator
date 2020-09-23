@@ -1,5 +1,5 @@
 steps:
-- name: 'insultinator functions build'
+- name: 'insultinator-chan'
   args:
     - functions
     - deploy
