@@ -1,0 +1,13 @@
+steps:
+- name: 'insultinator functions build'
+  args:
+    - functions
+    - deploy
+    - imtoohappy
+    - --region=australia-southeast1
+    - --source=.
+    - --trigger-http
+    - --entry-point=InsultMe
+    - --runtime=go113
+    - --set-env-vars=[PLEASE_NO_MORE=100]
+    - --service-account=insultfetchboi@upheld-garage-290112.iam.gserviceaccount.com
