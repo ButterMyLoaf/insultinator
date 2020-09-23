@@ -5,14 +5,16 @@ import (
 	"context"
 	"fmt"
 	"html"
+	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
 
 	"google.golang.org/api/sheets/v4"
 )
+
+const sheetID = "18J1dfIk2ckKd8885XvytVONG1cYu0Bjo_NP69ZmB6co"
 
 // InsultMe insults me when I need those slap back to reality.
 func InsultMe(w http.ResponseWriter, r *http.Request) {
@@ -22,31 +24,71 @@ func InsultMe(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalf("Sheet client wtf: %v", err)
 	}
-	sheetID := "18J1dfIk2ckKd8885XvytVONG1cYu0Bjo_NP69ZmB6co"
-	s, err := srv.Spreadsheets.Get(sheetID).Fields("sheets.properties").Do()
+
+	sizeLocation := "F1"
+	sizeStr, err := getCell(sizeLocation, srv)
 	if err != nil {
-		log.Fatalf("Sheet data cannot pls: %v", err)
+		log.Fatalf("can't get size:\n%v", err)
 	}
-	size := s.Sheets[0].Properties.GridProperties.RowCount
+
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		log.Fatalf("can't convert size: %v", err)
+	}
 
 	limit, err := strconv.Atoi(os.Getenv("PLEASE_NO_MORE"))
 	if err != nil {
 		log.Fatalf("cannot even limit: %v", err)
 	}
-	if l := int64(limit); size > l {
-		size = l
+
+	if size > limit {
+		size = limit
 	}
 
-	cell := fmt.Sprintf("A%d", rand.New(rand.NewSource(size)).Intn(int(size)))
-	insult, err := srv.Spreadsheets.Values.Get(sheetID, cell).Do()
+	i, err := randomNum(size)
 	if err != nil {
-		log.Fatalf("cannot insult reeeee: %v", err)
+		log.Fatal(err)
 	}
-	if len(insult.Values) == 0 {
-		log.Fatalf("it's wrong wtf: %s %v", cell, insult)
+
+	insult, err := getCell(fmt.Sprintf("A%d", i), srv)
+	if err != nil {
+		log.Fatal(err)
 	}
-	if len(insult.Values[0]) == 0 {
-		log.Fatalf("wrong again: %s %v", cell, insult)
+	fmt.Fprintf(w, html.EscapeString(insult))
+}
+
+func getCell(cell string, srv *sheets.Service) (string, error) {
+	stuff, err := srv.Spreadsheets.Values.Get(sheetID, cell).Do()
+	if err != nil {
+		return "", err
 	}
-	fmt.Fprintf(w, html.EscapeString(insult.Values[0][0].(string)))
+	if len(stuff.Values) == 0 {
+		return "", fmt.Errorf("empty: cell=%v stuff=%v", cell, stuff)
+	}
+	if len(stuff.Values[0]) == 0 {
+		return "", fmt.Errorf("empty again: cell=%v stuff=%v", cell, stuff)
+	}
+	return stuff.Values[0][0].(string), nil
+}
+
+// need this because random number can't be random in cloud functions
+func randomNum(max int) (int, error) {
+	random, err := http.Get(
+		fmt.Sprintf(
+			"https://www.random.org/integers/?num=1&min=1&max=%d&col=1&base=10&format=plain&rnd=new",
+			max,
+		),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("can't even get random number, cringe: %v", err)
+	}
+	b, err := ioutil.ReadAll(random.Body)
+	if err != nil {
+		return 0, fmt.Errorf("dafuq: %v", err)
+	}
+	i, err := strconv.Atoi(string(b))
+	if err != nil {
+		return 0, fmt.Errorf("tf did i get: val=%v err=%v", string(b), err)
+	}
+	return i, nil
 }
