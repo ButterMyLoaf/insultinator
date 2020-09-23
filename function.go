@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"google.golang.org/api/sheets/v4"
 )
@@ -86,7 +87,7 @@ func randomNum(max int) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("dafuq: %v", err)
 	}
-	i, err := strconv.Atoi(string(b))
+	i, err := strconv.Atoi(strings.Trim(string(b), " \n\t"))
 	if err != nil {
 		return 0, fmt.Errorf("tf did i get: val=%v err=%v", string(b), err)
 	}
