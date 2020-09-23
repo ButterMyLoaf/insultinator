@@ -2,24 +2,46 @@
 package p
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"html"
+	"log"
+	"math/rand"
 	"net/http"
+	"os"
+	"strconv"
+
+	"google.golang.org/api/sheets/v4"
 )
 
 // InsultMe insults me when I need those slap back to reality.
 func InsultMe(w http.ResponseWriter, r *http.Request) {
-	var d struct {
-		Message string `json:"message"`
+	ctx := context.Background()
+
+	srv, err := sheets.NewService(ctx)
+	if err != nil {
+		log.Fatalf("Sheet client wtf: %v", err)
 	}
-	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-		fmt.Fprint(w, "Hello World!")
-		return
+	sheetID := "18J1dfIk2ckKd8885XvytVONG1cYu0Bjo_NP69ZmB6co"
+	s, err := srv.Spreadsheets.Get(sheetID).Fields("sheets.properties").Do()
+	if err != nil {
+		log.Fatalf("Sheet data cannot pls: %v", err)
 	}
-	if d.Message == "" {
-		fmt.Fprint(w, "Hello World!")
-		return
+	size := s.Sheets[0].Properties.GridProperties.RowCount
+
+	limit, err := strconv.Atoi(os.Getenv("PLEASE_NO_MORE"))
+	if err != nil {
+		log.Fatalf("cannot even limit: %v", err)
 	}
-	fmt.Fprint(w, html.EscapeString(d.Message))
+	if l := int64(limit); size > l {
+		size = l
+	}
+
+	cell := fmt.Sprintf("A%d", rand.New(rand.NewSource(size)).Intn(int(size)))
+	insult, err := srv.Spreadsheets.Values.Get(sheetID, cell).Do()
+	if err != nil {
+		log.Fatalf("cannot insult reeeee: %v", err)
+	}
+
+	fmt.Fprintf(w, html.EscapeString(insult.Values[0][0].(string)))
 }
