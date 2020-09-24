@@ -16,7 +16,7 @@ import (
 	texttospeechpb "google.golang.org/genproto/googleapis/cloud/texttospeech/v1"
 )
 
-const sheetID = "18J1dfIk2ckKd8885XvytVONG1cYu0Bjo_NP69ZmB6co"
+var sheetID = os.Getenv("SHEET_ID")
 
 // InsultMe insults me when I need those slap back to reality.
 func InsultMe(w http.ResponseWriter, r *http.Request) {
@@ -114,6 +114,7 @@ func randomNum(max int) (int, error) {
 	return i, nil
 }
 
+// copied from text to speech api docs
 func createAudio(ctx context.Context, text string) ([]byte, error) {
 	client, err := texttospeech.NewClient(ctx)
 	if err != nil {
