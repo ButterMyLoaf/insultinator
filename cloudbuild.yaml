@@ -11,4 +11,3 @@ steps:
     - --runtime=go113
     - --set-env-vars=PLEASE_NO_MORE=100,CHAR_LIMIT=200,SHEET_ID=18J1dfIk2ckKd8885XvytVONG1cYu0Bjo_NP69ZmB6co
     - --service-account=insultfetchboi@upheld-garage-290112.iam.gserviceaccount.com
-    - --allow-unauthenticated

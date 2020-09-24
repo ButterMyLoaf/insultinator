@@ -3,7 +3,6 @@ package p
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -68,23 +67,13 @@ func InsultMe(w http.ResponseWriter, r *http.Request) {
 		insult = insult[:charLimit]
 	}
 
-	type Response struct {
-		Message  string `json:"message"`
-		Subtitle string `json:"subtitle"`
-	}
-
-	j, err := json.Marshal(Response{Message: insult, Subtitle: insult})
+	insultButInMp3, err := createAudio(ctx, insult)
 	if err != nil {
-		panic(err)
+		log.Fatalf("audio: %v", err)
 	}
 
-	// insultButInMp3, err := createAudio(ctx, insult)
-	// if err != nil {
-	// log.Fatalf("audio: %v", err)
-	// }
-
-	w.Header().Add("Content-Type", "application/json")
-	if _, err = w.Write(j); err != nil {
+	w.Header().Add("Context-Type", "audio/mpeg")
+	if _, err = w.Write(insultButInMp3); err != nil {
 		log.Fatalf("writing: %v", err)
 	}
 }
