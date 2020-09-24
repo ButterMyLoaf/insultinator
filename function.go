@@ -57,6 +57,16 @@ func InsultMe(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
+	charLimit, err := strconv.Atoi(os.Getenv("CHAR_LIMIT"))
+	if err != nil {
+		log.Fatalf("char limit: %v", err)
+	}
+
+	if len(insult) > charLimit {
+		// text to speech api ain't cheap
+		insult = insult[:charLimit]
+	}
+
 	insultButInMp3, err := createAudio(ctx, insult)
 	if err != nil {
 		log.Fatalf("audio: %v", err)

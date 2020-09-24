@@ -9,5 +9,5 @@ steps:
     - --trigger-http
     - --entry-point=InsultMe
     - --runtime=go113
-    - --set-env-vars=PLEASE_NO_MORE=100
+    - --set-env-vars=PLEASE_NO_MORE=100,CHAR_LIMIT=200
     - --service-account=insultfetchboi@upheld-garage-290112.iam.gserviceaccount.com
