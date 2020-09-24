@@ -33,3 +33,13 @@ gcloud functions deploy [FUNCTION NAME HERE] \
     --set-env-vars=PLEASE_NO_MORE=[INSULT LIMIT HERE],CHAR_LIMIT=[INSULT CHARACTER LIMIT HERE],SHEET_ID=[YOUR SHEET ID HERE] \
     --service-account=[YOUR SERVICE ACCOUNT EMAIL HERE]
 ```
+
+Finally, to use it, install requirements first
+```
+pip install -r requirements.txt
+```
+
+and then just run
+```bash
+./start.sh
+```
