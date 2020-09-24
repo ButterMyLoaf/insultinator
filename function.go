@@ -4,7 +4,6 @@ package p
 import (
 	"context"
 	"fmt"
-	"html"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,7 +11,9 @@ import (
 	"strconv"
 	"strings"
 
+	texttospeech "cloud.google.com/go/texttospeech/apiv1"
 	"google.golang.org/api/sheets/v4"
+	texttospeechpb "google.golang.org/genproto/googleapis/cloud/texttospeech/v1"
 )
 
 const sheetID = "18J1dfIk2ckKd8885XvytVONG1cYu0Bjo_NP69ZmB6co"
@@ -55,7 +56,16 @@ func InsultMe(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintf(w, html.EscapeString(insult))
+
+	insultButInMp3, err := createAudio(ctx, insult)
+	if err != nil {
+		log.Fatalf("audio: %v", err)
+	}
+
+	w.Header().Add("Context-Type", "audio/mpeg")
+	if _, err = w.Write(insultButInMp3); err != nil {
+		log.Fatalf("writing: %v", err)
+	}
 }
 
 func getCell(cell string, srv *sheets.Service) (string, error) {
@@ -92,4 +102,36 @@ func randomNum(max int) (int, error) {
 		return 0, fmt.Errorf("tf did i get: val=%v err=%v", string(b), err)
 	}
 	return i, nil
+}
+
+func createAudio(ctx context.Context, text string) ([]byte, error) {
+	client, err := texttospeech.NewClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Perform the text-to-speech request on the text input with the selected
+	// voice parameters and audio file type.
+	req := texttospeechpb.SynthesizeSpeechRequest{
+		// Set the text input to be synthesized.
+		Input: &texttospeechpb.SynthesisInput{
+			InputSource: &texttospeechpb.SynthesisInput_Text{Text: text},
+		},
+		// Build the voice request, select the language code ("en-US") and the SSML
+		// voice gender ("neutral").
+		Voice: &texttospeechpb.VoiceSelectionParams{
+			LanguageCode: "en-US",
+			SsmlGender:   texttospeechpb.SsmlVoiceGender_FEMALE,
+		},
+		// Select the type of audio file you want returned.
+		AudioConfig: &texttospeechpb.AudioConfig{
+			AudioEncoding: texttospeechpb.AudioEncoding_MP3,
+		},
+	}
+
+	resp, err := client.SynthesizeSpeech(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.GetAudioContent(), nil
 }
